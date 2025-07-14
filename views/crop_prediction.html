@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crop Prediction</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            max-width: 800px; 
+            margin: 20px auto; 
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h2>Crop Prediction System</h2>
+    
+    <div class="form-group">
+        <label>N Value:</label>
+        <input type="number" id="n" placeholder="Enter N value" required>
+    </div>
+
+    <div class="form-group">
+        <label>P Value:</label>
+        <input type="number" id="p" placeholder="Enter P value" required>
+    </div>
+
+    <div class="form-group">
+        <label>K Value:</label>
+        <input type="number" id="k" placeholder="Enter K value" required>
+    </div>
+
+    <div class="form-group">
+        <label>Temperature (°C):</label>
+        <input type="number" id="temperature" step="0.01" placeholder="Enter temperature" required>
+    </div>
+
+    <div class="form-group">
+        <label>Humidity (%):</label>
+        <input type="number" id="humidity" step="0.01" placeholder="Enter humidity" required>
+    </div>
+
+    <div class="form-group">
+        <label>pH Level:</label>
+        <input type="number" id="ph" step="0.01" placeholder="Enter pH level" required>
+    </div>
+
+    <div class="form-group">
+        <label>Rainfall (mm):</label>
+        <input type="number" id="rainfall" step="0.01" placeholder="Enter rainfall" required>
+    </div>
+
+    <div class="form-group">
+        <label for="previous_crop">Previous Crop:</label>
+        <select id="previous_crop" required style="width: 100%; padding: 8px; margin-bottom: 10px;">
+            <option value="">Select Previous Crop</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Soil Type:</label>
+        <select id="soil_type" required>
+            <option value="">Select Soil Type</option>
+            <option value="Black Soil">Black Soil</option>
+            <option value="Red Soil">Red Soil</option>
+            <option value="Sandy Soil">Sandy Soil</option>
+            <option value="Loamy Soil">Loamy Soil</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Water Requirement:</label>
+        <select id="water_requirement" required>
+            <option value="">Select Water Requirement</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Investment per Acre (₹):</label>
+        <input type="number" id="investment_per_acre" placeholder="Enter investment amount" required>
+    </div>
+
+    <div class="form-group">
+        <label>Crop Duration:</label>
+        <select id="crop_duration" required>
+            <option value="">Select Duration</option>
+            <option value="Short (3-4 months)">Short (3-4 months)</option>
+            <option value="Medium (5-7 months)">Medium (5-7 months)</option>
+            <option value="Long (8-12 months)">Long (8-12 months)</option>
+        </select>
+    </div>
+
+    <button onclick="predictCrop()">Predict Next Crop</button>
+
+    <div id="results" style="margin-top: 20px;"></div>
+
+    <script>
+        async function predictCrop() {
+            const formData = {
+                n: parseFloat(document.getElementById('n').value),
+                p: parseFloat(document.getElementById('p').value),
+                k: parseFloat(document.getElementById('k').value),
+                temperature: parseFloat(document.getElementById('temperature').value),
+                humidity: parseFloat(document.getElementById('humidity').value),
+                ph: parseFloat(document.getElementById('ph').value),
+                rainfall: parseFloat(document.getElementById('rainfall').value),
+                previous_crop: document.getElementById('previous_crop').value,
+                soil_type: document.getElementById('soil_type').value,
+                water_requirement: document.getElementById('water_requirement').value,
+                investment_per_acre: parseFloat(document.getElementById('investment_per_acre').value),
+                crop_duration: document.getElementById('crop_duration').value
+            };
+
+            console.log('Sending form data:', formData); // Debug log
+
+            try {
+                const response = await fetch('/predict-crop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                console.log('Received response:', data); // Debug log
+
+                if (data.success) {
+                    displayResults(data.recommendations, data.matchCount);
+                } else {
+                    alert(data.message);
+                    console.log('Error details:', data); // Debug log
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error making prediction');
+            }
+        }
+
+        function displayResults(recommendations, matchCount) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h3>Top Recommended Crops</h3>
+                <p>Analysis based on ${matchCount} similar conditions from our database</p>
+                ${recommendations.map((rec, index) => `
+                    <div class="recommendation" style="
+                        border: 1px solid #ccc; 
+                        padding: 20px; 
+                        margin: 15px 0; 
+                        border-radius: 8px; 
+                        background: ${index === 0 ? '#f0fff0' : 'white'};
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        
+                        <h4 style="margin: 0 0 15px 0; color: #2c5282; font-size: 1.2em;">
+                            ${index + 1}. ${rec.crop}
+                            ${index === 0 ? ' <span style="color: #4CAF50; font-size: 0.9em;">(Best Match)</span>' : ''}
+                        </h4>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="stat-box" style="background: #f8f9fa; padding: 10px; border-radius: 6px;">
+                                <p style="margin: 0; color: #666;">Investment Required</p>
+                                <p style="margin: 5px 0; font-size: 1.1em; font-weight: bold;">
+                                    ₹${parseFloat(rec.averageInvestment).toLocaleString()}
+                                </p>
+                            </div>
+                            
+                            <div class="stat-box" style="background: #f8f9fa; padding: 10px; border-radius: 6px;">
+                                <p style="margin: 0; color: #666;">Expected Profit</p>
+                                <p style="margin: 5px 0; font-size: 1.1em; font-weight: bold;">
+                                    ₹${parseFloat(rec.predictedProfit).toLocaleString()}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px; text-align: right; color: #666;">
+                            Based on ${rec.sampleCount} similar cases
+                        </div>
+                    </div>
+                `).join('')}
+                
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; color: #2c5282;">Understanding the Results:</h4>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li><strong>Investment:</strong> Average capital needed per acre</li>
+                        <li><strong>Profit:</strong> Expected earnings per acre</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        function getConfidenceColor(confidence) {
+            const conf = parseFloat(confidence);
+            if (conf >= 20) return '#4CAF50';  // High confidence
+            if (conf >= 10) return '#FFA726';  // Medium confidence
+            return '#FF7043';                  // Lower confidence
+        }
+
+        async function loadPreviousCrops() {
+            try {
+                const response = await fetch('/get-previous-crops');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const selectElement = document.getElementById('previous_crop');
+                    selectElement.innerHTML = '<option value="">Select Previous Crop</option>';
+                    
+                    // Add all available crops
+                    data.crops.forEach(crop => {
+                        if (crop && crop.trim()) {  // Only add non-empty crop names
+                            const option = document.createElement('option');
+                            option.value = crop;
+                            option.textContent = crop;
+                            selectElement.appendChild(option);
+                        }
+                    });
+
+                    // Log the number of options added
+                    console.log(`Loaded ${data.crops.length} crops into dropdown`);
+                } else {
+                    console.error('Failed to load crops:', data.message);
+                }
+            } catch (error) {
+                console.error('Error loading crops:', error);
+            }
+        }
+
+        // Load crops when page loads
+        document.addEventListener('DOMContentLoaded', loadPreviousCrops);
+
+        // Add this to check what crops are available
+        document.getElementById('previous_crop').addEventListener('change', function() {
+            console.log('Selected crop:', this.value);
+        });
+    </script>
+</body>
+</html> 
